@@ -186,7 +186,7 @@ export async function reverseGeocode(
       throw new Error(`Reverse geocoding API returned status ${response.status}`);
     }
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     if (!data || !data.display_name) {
       return {
@@ -197,7 +197,7 @@ export async function reverseGeocode(
     }
 
     return {
-      address: data.display_name,
+      address: data.display_name as string,
       success: true,
     };
   } catch (error: any) {

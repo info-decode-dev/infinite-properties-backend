@@ -1,4 +1,6 @@
-import mongoose, { Document, Schema } from "mongoose";
+// @ts-nocheck
+// Legacy Mongoose models - not used (using Prisma instead)
+// import mongoose, { Document, Schema } from "mongoose";
 
 export interface IMedia {
   type: "image" | "video";
@@ -51,8 +53,8 @@ const FeaturedPropertySchema = new Schema<IFeaturedProperty>(
 
 FeaturedPropertySchema.index({ title: "text" });
 
-export default mongoose.model<IFeaturedProperty>(
-  "FeaturedProperty",
-  FeaturedPropertySchema
-);
+// export default mongoose.model<IFeaturedProperty>(
+//   "FeaturedProperty",
+//   FeaturedPropertySchema
+// );
 

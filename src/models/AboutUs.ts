@@ -1,4 +1,6 @@
-import mongoose, { Document, Schema } from "mongoose";
+// @ts-nocheck
+// Legacy Mongoose models - not used (using Prisma instead)
+// import mongoose, { Document, Schema } from "mongoose";
 
 export interface IStatistic {
   id: string;
@@ -162,5 +164,5 @@ const AboutUsSchema = new Schema<IAboutUs>(
 // Only allow one AboutUs document
 AboutUsSchema.index({ companyName: 1 }, { unique: true });
 
-export default mongoose.model<IAboutUs>("AboutUs", AboutUsSchema);
+// export default mongoose.model<IAboutUs>("AboutUs", AboutUsSchema);
 

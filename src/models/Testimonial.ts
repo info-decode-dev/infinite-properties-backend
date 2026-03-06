@@ -1,4 +1,6 @@
-import mongoose, { Document, Schema } from "mongoose";
+// @ts-nocheck
+// Legacy Mongoose models - not used (using Prisma instead)
+// import mongoose, { Document, Schema } from "mongoose";
 
 export interface IPropertyMedia {
   type: "image" | "video";
@@ -56,5 +58,5 @@ const TestimonialSchema = new Schema<ITestimonial>(
 
 TestimonialSchema.index({ title: "text", clientName: "text" });
 
-export default mongoose.model<ITestimonial>("Testimonial", TestimonialSchema);
+// export default mongoose.model<ITestimonial>("Testimonial", TestimonialSchema);
 

@@ -98,9 +98,9 @@ export const getAllEnquiries = asyncHandler(
     const skip = (pageNum - 1) * limitNum;
 
     // Sorting
-    const orderBy: any = {};
+    const orderBy: Record<string, "asc" | "desc"> = {};
     const validSortFields = ["createdAt", "updatedAt", "userName", "userEmail", "status"];
-    const sortField = validSortFields.includes(sortBy as string) ? sortBy : "createdAt";
+    const sortField = validSortFields.includes(sortBy as string) ? (sortBy as string) : "createdAt";
     orderBy[sortField] = sortOrder === "asc" ? "asc" : "desc";
 
     // Get total count for pagination
