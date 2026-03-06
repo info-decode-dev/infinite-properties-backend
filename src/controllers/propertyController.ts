@@ -3,6 +3,8 @@ import { AuthRequest } from "../middleware/auth";
 import prisma from "../config/database";
 import { asyncHandler, AppError } from "../middleware/errorHandler";
 import { geocodeLocation } from "../utils/geocode";
+import { uploadToSupabase } from "../utils/supabaseStorage";
+import { supabase } from "../config/supabase";
 
 export const getAllProperties = asyncHandler(
   async (req: AuthRequest, res: Response) => {
@@ -181,9 +183,22 @@ export const createProperty = asyncHandler(
     // Handle file uploads
     const images: string[] = [];
     if (req.files && Array.isArray(req.files)) {
-      req.files.forEach((file: Express.Multer.File) => {
-        images.push(`/uploads/images/${file.filename}`);
-      });
+      // If Supabase is configured, upload files to Supabase and get full URLs
+      if (supabase) {
+        for (const file of req.files) {
+          const result = await uploadToSupabase(file, 'images');
+          if (result.url) {
+            images.push(result.url);
+          } else {
+            console.error('Failed to upload image to Supabase:', result.error);
+          }
+        }
+      } else {
+        // Local storage - use filename
+        req.files.forEach((file: Express.Multer.File) => {
+          images.push(`/uploads/images/${file.filename}`);
+        });
+      }
     }
 
     // Parse JSON strings from FormData if they exist
@@ -400,9 +415,22 @@ export const updateProperty = asyncHandler(
     // Add new uploaded images
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
       const newImages: string[] = [];
-      req.files.forEach((file: Express.Multer.File) => {
-        newImages.push(`/uploads/images/${file.filename}`);
-      });
+      // If Supabase is configured, upload files to Supabase and get full URLs
+      if (supabase) {
+        for (const file of req.files) {
+          const result = await uploadToSupabase(file, 'images');
+          if (result.url) {
+            newImages.push(result.url);
+          } else {
+            console.error('Failed to upload image to Supabase:', result.error);
+          }
+        }
+      } else {
+        // Local storage - use filename
+        req.files.forEach((file: Express.Multer.File) => {
+          newImages.push(`/uploads/images/${file.filename}`);
+        });
+      }
       images = [...images, ...newImages];
     }
 
