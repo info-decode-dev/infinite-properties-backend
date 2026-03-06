@@ -20,7 +20,7 @@ import enquiryRoutes from "./routes/enquiryRoutes";
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT || "5000", 10);
 
 // Middleware
 app.use(helmet({
@@ -43,6 +43,19 @@ app.use("/uploads", (req, res, next) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   next();
 }, express.static(path.join(__dirname, "../public/uploads")));
+
+// Root route
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Infinite Properties API Server",
+    version: "1.0.0",
+    endpoints: {
+      health: "/health",
+      api: "/api",
+    },
+  });
+});
 
 // Health check
 app.get("/health", async (req, res) => {
@@ -96,8 +109,9 @@ process.on("SIGTERM", async () => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+const HOST = process.env.HOST || "0.0.0.0";
+app.listen(PORT, HOST, () => {
+  console.log(`Server is running on ${HOST}:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`Database: PostgreSQL`);
 });
