@@ -1,0 +1,348 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+model Property {
+  id                String   @id @default(cuid())
+  title             String
+  description       String   @db.Text
+  images            String[] @default([])
+  actualPrice       Decimal  @db.Decimal(12, 2)
+  offerPrice        Decimal? @db.Decimal(12, 2)
+  bhkType           String?  // Nullable for Plot properties
+  propertyType      String   // Home, Villa, Flat, Apartment, Plot, etc.
+  constructionStatus String? // Nullable for Plot properties
+  landArea          Decimal  @db.Decimal(12, 2)
+  landAreaUnit      String   // "cent" or "acre"
+  builtUpArea       Decimal? @db.Decimal(12, 2) // Nullable for Plot properties
+  furnishedStatus   String?  // "Furnished", "Semi-Furnished", "Unfurnished"
+  negotiation       String?  // "Negotiable", "Slightly Negotiable", "Not Negotiable"
+  nearbyLandmarks   String[] @default([]) // Array of landmark strings
+  tags              String[] @default([]) // Nullable for Plot properties
+  // Plot-specific fields
+  landType          String?  // "Residential Land", "Commercial Land", "Resort Land", "Agricultural Land", "Special Purpose Land"
+  plotSize          Decimal? @db.Decimal(12, 2) // Plot area
+  plotSizeUnit      String?  // "Cent", "Acre", "Square Feet"
+  ownership         String?  // "Freehold" or "Leasehold"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  locationId        String   @unique
+  location          Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  
+  developerInfoId   String   @unique
+  developerInfo     DeveloperInfo @relation(fields: [developerInfoId], references: [id], onDelete: Cascade)
+
+  amenities         PropertyAmenity[]
+  collections       PropertyCollection[]
+  enquiries        Enquiry[]
+  accessibility     PropertyAccessibility[]
+
+  @@index([title])
+  @@index([bhkType])
+  @@index([constructionStatus])
+  @@index([propertyType])
+  @@index([createdAt])
+  @@index([locationId])
+  @@index([title, description])
+}
+
+model Location {
+  id            String    @id @default(cuid())
+  exactLocation String
+  city          String
+  state         String
+  country       String
+  pincode       String?
+  latitude      Float?
+  longitude     Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  property      Property?
+
+  @@index([city])
+  @@index([state])
+  @@index([country])
+  @@index([pincode])
+  @@index([city, state])
+}
+
+model DeveloperInfo {
+  id          String    @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  website     String?
+  description String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  property    Property?
+
+  @@index([name])
+}
+
+model Builder {
+  id          String    @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  website     String?
+  description String?   @db.Text
+  profilePicture String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([name])
+  @@index([email])
+}
+
+model PropertyAmenity {
+  id        String   @id @default(cuid())
+  name      String
+  icon      String?
+  propertyId String
+  property  Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([propertyId])
+}
+
+model PropertyAccessibility {
+  id        String   @id @default(cuid())
+  name      String   // Location name (e.g., "Ernakulam town railway station")
+  distance  Decimal  @db.Decimal(10, 2)
+  unit      String   // "meter" or "kilometer"
+  propertyId String
+  property  Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([propertyId])
+}
+
+model Testimonial {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?  @db.Text
+  clientName    String
+  profilePicture String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  propertyMedia PropertyMedia?
+
+  @@index([title])
+  @@index([clientName])
+  @@index([title, clientName, description])
+}
+
+model PropertyMedia {
+  id            String      @id @default(cuid())
+  type          String      // "image" | "video"
+  url           String
+  testimonialId String      @unique
+  testimonial   Testimonial @relation(fields: [testimonialId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+}
+
+model CuratedCollection {
+  id        String   @id @default(cuid())
+  title     String
+  image     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  properties PropertyCollection[]
+
+  @@index([title])
+}
+
+model Reel {
+  id              String   @id @default(cuid())
+  link            String
+  title           String
+  description     String?  @db.Text
+  actionButtonLink String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([title])
+  @@index([link])
+  @@index([title, description])
+}
+
+model FeaturedProperty {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  gallery     FeaturedMedia[]
+  clientLogos String[]
+
+  @@index([title])
+  @@index([title, description])
+}
+
+model FeaturedMedia {
+  id                  String            @id @default(cuid())
+  type                String            // "image" | "video"
+  url                 String
+  featuredPropertyId  String
+  featuredProperty    FeaturedProperty  @relation(fields: [featuredPropertyId], references: [id], onDelete: Cascade)
+  createdAt           DateTime          @default(now())
+
+  @@index([featuredPropertyId])
+}
+
+model PropertyCollection {
+  id                String            @id @default(cuid())
+  propertyId        String
+  curatedCollectionId String
+  property          Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  curatedCollection CuratedCollection @relation(fields: [curatedCollectionId], references: [id], onDelete: Cascade)
+  createdAt         DateTime          @default(now())
+
+  @@unique([propertyId, curatedCollectionId])
+  @@index([propertyId])
+  @@index([curatedCollectionId])
+}
+
+model AboutUs {
+  id          String   @id @default(cuid())
+  companyName String   @unique
+  tagline     String?
+  mission     String?  @db.Text
+  vision      String?  @db.Text
+  story       String?  @db.Text
+  values      String[]
+  images      String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  statistics  AboutUsStatistic[]
+  achievements AboutUsAchievement[]
+  teamMembers AboutUsTeamMember[]
+  contactInfo AboutUsContactInfo?
+}
+
+model AboutUsStatistic {
+  id        String   @id @default(cuid())
+  label     String
+  value     String
+  icon      String?
+  suffix    String?
+  prefix    String?
+  aboutUsId String
+  aboutUs   AboutUs  @relation(fields: [aboutUsId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([aboutUsId])
+}
+
+model AboutUsAchievement {
+  id          String   @id @default(cuid())
+  title       String
+  value       String
+  icon        String?
+  description String?  @db.Text
+  aboutUsId   String
+  aboutUs     AboutUs  @relation(fields: [aboutUsId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@index([aboutUsId])
+}
+
+model AboutUsTeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  position  String
+  bio       String?  @db.Text
+  image     String?
+  email     String?
+  aboutUsId String
+  aboutUs   AboutUs  @relation(fields: [aboutUsId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  socialLinks AboutUsSocialLinks?
+
+  @@index([aboutUsId])
+}
+
+model AboutUsSocialLinks {
+  id          String            @id @default(cuid())
+  linkedin    String?
+  twitter     String?
+  facebook    String?
+  teamMemberId String           @unique
+  teamMember  AboutUsTeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+}
+
+model AboutUsContactInfo {
+  id        String   @id @default(cuid())
+  address   String?  @db.Text
+  phone     String?
+  email     String?
+  website   String?
+  aboutUsId String   @unique
+  aboutUs   AboutUs  @relation(fields: [aboutUsId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  socialMedia AboutUsSocialMedia?
+}
+
+model AboutUsSocialMedia {
+  id            String            @id @default(cuid())
+  facebook      String?
+  twitter       String?
+  instagram     String?
+  linkedin      String?
+  youtube       String?
+  contactInfoId String            @unique
+  contactInfo   AboutUsContactInfo @relation(fields: [contactInfoId], references: [id], onDelete: Cascade)
+  createdAt     DateTime          @default(now())
+}
+
+model Enquiry {
+  id          String   @id @default(cuid())
+  userName    String
+  userEmail   String
+  userPhone   String?
+  message     String?  @db.Text
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  status      String   @default("pending") // "pending", "contacted", "closed"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([propertyId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userEmail])
+}
+
