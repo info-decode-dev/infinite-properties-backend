@@ -26,9 +26,31 @@ const PORT = parseInt(process.env.PORT || "5000", 10);
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
+// CORS configuration - allow multiple origins
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ["http://localhost:3000"];
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+      callback(null, true);
+    } else {
+      // In development, allow localhost
+      if (process.env.NODE_ENV === "development" && origin.includes("localhost")) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    }
+  },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 app.use(compression());
 app.use(morgan("dev"));
@@ -67,10 +89,12 @@ app.get("/health", async (req, res) => {
       database: "connected",
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Health check database error:", error);
     res.status(500).json({
       success: false,
       message: "Database connection failed",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
       timestamp: new Date().toISOString(),
     });
   }
